@@ -7,7 +7,7 @@ void main() {
   print(person);
 }
 
-class Person extends Object {
+class Person extends Object with BoilerplateToString {
   String firstName;
   String lastName;
 
