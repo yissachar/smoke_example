@@ -1,0 +1,13 @@
+name: smoke_example
+description: An example Smoke app
+dependencies:
+  browser: any
+  smoke: any
+  barback: any
+  code_transformers: any
+  benchmark_harness: any
+transformers:
+  - smoke_example
+  - $dart2js:
+      minify: true
+
