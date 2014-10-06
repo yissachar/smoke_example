@@ -2,10 +2,10 @@ name: smoke_example
 description: An example Smoke app
 dependencies:
   browser: any
-  smoke: any
-  barback: any
-  code_transformers: any
-  benchmark_harness: any
+  smoke: '>=0.2.0 <0.3.0'
+  barback: '>=0.15.0 <0.16.0'
+  code_transformers: '>=0.2.0 <0.3.0'
+  source_maps: '>=0.9.0 <0.10.0'
 transformers:
   - smoke_example
   - $dart2js:

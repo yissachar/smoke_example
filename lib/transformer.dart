@@ -5,38 +5,28 @@ import 'package:smoke/codegen/generator.dart';
 import 'package:code_transformers/resolver.dart';
 import 'package:code_transformers/src/dart_sdk.dart';
 
-class SmokeTransformer extends Transformer {
+class SmokeTransformer extends Transformer with ResolverTransformer {
   final BarbackSettings _settings;
-  Resolvers _resolvers;
   Transform _transform;
   AssetId _primaryInputId;
   String _fileSuffix = '_bootstrap';
 
-  SmokeTransformer.asPlugin(this._settings);
-
-  @override
-  Future apply(Transform transform) {
-    _transform = transform;
-
-    return
-        _resolve()
-        .then(_buildSmokeBootstrap)
-        .then(_buildHtmlBootstrap);
+  SmokeTransformer.asPlugin(this._settings) {
+    resolvers = new Resolvers(dartSdkDirectory);
   }
 
-  /// Initializes AssetIds and resolvers.
-  Future _resolve() {
-    return _transform.primaryInput.readAsString().then((content) {
-      _primaryInputId = _transform.primaryInput.id;
+  @override
+  Future applyResolver(Transform transform, Resolver resolver) {
+    _transform = transform;
+    _primaryInputId = _transform.primaryInput.id;
+    _buildSmokeBootstrap(resolver);
 
-      _resolvers = new Resolvers(dartSdkDirectory);
-    });
+    return _buildHtmlBootstrap();
   }
 
   /// Builds a Smoke bootstrapper that intializes static Smoke access
   /// and then calls the actual entry point.
-  Future _buildSmokeBootstrap(_) {
-    return _resolvers.get(_transform).then((resolver) {
+  _buildSmokeBootstrap(Resolver resolver) {
       // Initialize the Smoke generator and recorder
       var generator = new SmokeCodeGenerator();
       Recorder recorder = new Recorder(generator,
@@ -56,21 +46,18 @@ class SmokeTransformer extends Transformer {
       sb.write('\n');
       generator.writeTopLevelDeclarations(sb);
       sb.write('\nvoid main() {\n');
-      generator.writeInitCall(sb);
+      generator.writeStaticConfiguration(sb);
       // Call the entry point's main method
-      sb.write('\n  smoke_0.main();\n}');
+      sb.write(';\n  smoke_0.main();\n}');
 
       // Add the Smoke bootstrapper to the output files
       var bootstrapId = _primaryInputId.changeExtension('${_fileSuffix}.dart');
       _transform.addOutput(new Asset.fromString(bootstrapId, sb.toString()));
-
-      resolver.release();
-    });
   }
 
   /// Builds an HTML file that is identical to the entry point HTML
   /// but uses our Smoke bootstrap as the Dart entry point
-  Future _buildHtmlBootstrap(_) {
+  Future _buildHtmlBootstrap() {
     AssetId primaryHtml = _primaryInputId.changeExtension('.html');
     return _transform.getInput(primaryHtml).then((asset) {
       var packageName = _transform.primaryInput.id.package.toLowerCase();

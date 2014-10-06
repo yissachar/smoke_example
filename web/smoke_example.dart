@@ -1,3 +1,5 @@
+library smoke_example;
+
 import 'package:smoke/smoke.dart';
 
 void main() {
